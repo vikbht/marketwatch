@@ -1,0 +1,9 @@
+# Binaries
+MarketWatch
+
+# Logs
+marketwatch.log
+*.log
+
+# OS metadata
+.DS_Store

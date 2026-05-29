@@ -63,18 +63,20 @@ public struct MarketIndexData: Identifiable, Codable {
     public let currentPrice: Double
     public let previousClose: Double
     public let historyPoints: [Double]
+    public let historyTimestamps: [Date]
     
     public var priceChangePercent: Double {
         guard previousClose > 0 else { return 0.0 }
         return ((currentPrice - previousClose) / previousClose) * 100.0
     }
     
-    public init(symbol: String, title: String, currentPrice: Double, previousClose: Double, historyPoints: [Double]) {
+    public init(symbol: String, title: String, currentPrice: Double, previousClose: Double, historyPoints: [Double], historyTimestamps: [Date]) {
         self.symbol = symbol
         self.title = title
         self.currentPrice = currentPrice
         self.previousClose = previousClose
         self.historyPoints = historyPoints
+        self.historyTimestamps = historyTimestamps
     }
 }
 
@@ -94,6 +96,7 @@ struct YahooChartJSON: Decodable {
             }
             let meta: Meta
             let indicators: Indicators
+            let timestamp: [Int]?
         }
         let result: [Result]?
     }
@@ -122,6 +125,7 @@ public class MarketBreadthFetcher: ObservableObject {
     @Published public var historyNewHighs: [Double] = []
     @Published public var historySMA50: [Double] = []
     @Published public var historySMA200: [Double] = []
+    @Published public var historyTimestamps: [Date] = []
     
     // Live index models (VIX & Put/Call Ratio)
     @Published public var vix: MarketIndexData? = nil
@@ -162,6 +166,20 @@ public class MarketBreadthFetcher: ObservableObject {
         self.historyNewHighs = generateStarterCurve(from: 50.0, to: nh, length: 40)
         self.historySMA50 = generateStarterCurve(from: 50.0, to: s50, length: 40)
         self.historySMA200 = generateStarterCurve(from: 50.0, to: s200, length: 40)
+        
+        let now = Date()
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now.addingTimeInterval(-86400)
+        
+        var dates: [Date] = []
+        // First 20 represent yesterday's close
+        for i in 0..<20 {
+            dates.append(yesterday.addingTimeInterval(Double(20 - 1 - i) * -120.0))
+        }
+        // Last 20 represent today's trading
+        for i in 0..<20 {
+            dates.append(now.addingTimeInterval(Double(20 - 1 - i) * -120.0))
+        }
+        self.historyTimestamps = dates
     }
     
     private func generateStarterCurve(from: Double, to: Double, length: Int) -> [Double] {
@@ -299,11 +317,13 @@ public class MarketBreadthFetcher: ObservableObject {
                             self.historyNewHighs.append(nh)
                             self.historySMA50.append(s50)
                             self.historySMA200.append(s200)
+                            self.historyTimestamps.append(Date())
                             
                             if self.historyAdvancing.count > 40 { self.historyAdvancing.removeFirst() }
                             if self.historyNewHighs.count > 40 { self.historyNewHighs.removeFirst() }
                             if self.historySMA50.count > 40 { self.historySMA50.removeFirst() }
                             if self.historySMA200.count > 40 { self.historySMA200.removeFirst() }
+                            if self.historyTimestamps.count > 40 { self.historyTimestamps.removeFirst() }
                         }
                     }
                 } else if self.items.isEmpty {
@@ -364,8 +384,23 @@ public class MarketBreadthFetcher: ObservableObject {
             points = quotes.close.compactMap { $0 }
         }
         
+        var dates: [Date] = []
+        if let epochs = result.timestamp {
+            dates = epochs.map { Date(timeIntervalSince1970: TimeInterval($0)) }
+        }
+        
         if points.isEmpty {
             points = [prevClose, current]
+        }
+        if dates.isEmpty {
+            dates = [Date().addingTimeInterval(-120), Date()]
+        }
+        
+        if points.count > 40 {
+            points = Array(points.suffix(40))
+        }
+        if dates.count > 40 {
+            dates = Array(dates.suffix(40))
         }
         
         return MarketIndexData(
@@ -373,7 +408,8 @@ public class MarketBreadthFetcher: ObservableObject {
             title: title,
             currentPrice: current,
             previousClose: prevClose,
-            historyPoints: points
+            historyPoints: points,
+            historyTimestamps: dates
         )
     }
     
@@ -447,22 +483,36 @@ public class MarketBreadthFetcher: ObservableObject {
     }
     
     private func getPlaceholderVixData() -> MarketIndexData {
+        let now = Date()
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now.addingTimeInterval(-86400)
+        var dates: [Date] = []
+        for i in 0..<5 { dates.append(yesterday.addingTimeInterval(Double(5 - 1 - i) * -120.0)) }
+        for i in 0..<6 { dates.append(now.addingTimeInterval(Double(6 - 1 - i) * -120.0)) }
+        
         return MarketIndexData(
             symbol: "^VIX",
             title: "VIX INDEX",
             currentPrice: 14.52,
             previousClose: 13.88,
-            historyPoints: [13.88, 13.92, 14.05, 14.12, 14.28, 14.18, 14.32, 14.22, 14.40, 14.36, 14.52]
+            historyPoints: [13.88, 13.92, 14.05, 14.12, 14.28, 14.18, 14.32, 14.22, 14.40, 14.36, 14.52],
+            historyTimestamps: dates
         )
     }
     
     private func getPlaceholderPutCallData() -> MarketIndexData {
+        let now = Date()
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now.addingTimeInterval(-86400)
+        var dates: [Date] = []
+        for i in 0..<5 { dates.append(yesterday.addingTimeInterval(Double(5 - 1 - i) * -120.0)) }
+        for i in 0..<6 { dates.append(now.addingTimeInterval(Double(6 - 1 - i) * -120.0)) }
+        
         return MarketIndexData(
             symbol: "^CPCE",
             title: "EQUITY PUT/CALL",
             currentPrice: 0.62,
             previousClose: 0.65,
-            historyPoints: [0.65, 0.64, 0.62, 0.60, 0.61, 0.63, 0.65, 0.67, 0.64, 0.63, 0.62]
+            historyPoints: [0.65, 0.64, 0.62, 0.60, 0.61, 0.63, 0.65, 0.67, 0.64, 0.63, 0.62],
+            historyTimestamps: dates
         )
     }
 }

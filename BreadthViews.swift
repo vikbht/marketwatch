@@ -15,10 +15,31 @@ struct MarketTheme {
 // Vector sparkline chart with grids, dotted baseline, and left-aligned Y-axis ticks
 struct BreadthSparklineChart: View {
     let points: [Double]
+    let timestamps: [Date]
     let isBullish: Bool
     let yTicks: [String]
     let baselineYPercent: CGFloat? // optional baseline relative height (0.0 to 1.0)
     let fontSizeScale: Double
+    
+    private func getDayBreakIndices() -> [Int] {
+        guard timestamps.count > 1 else { return [] }
+        var indices: [Int] = []
+        let calendar = Calendar.current
+        for i in 1..<min(points.count, timestamps.count) {
+            let prev = timestamps[i - 1]
+            let curr = timestamps[i]
+            if !calendar.isDate(prev, inSameDayAs: curr) {
+                indices.append(i)
+            }
+        }
+        return indices
+    }
+    
+    private func formatDayLabel(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d" // e.g. "May 29"
+        return "DAY BREAK - \(formatter.string(from: date).uppercased())"
+    }
     
     var body: some View {
         GeometryReader { geo in
@@ -71,6 +92,30 @@ struct BreadthSparklineChart: View {
                 .frame(width: w, height: h, alignment: .topLeading)
                 .padding(.leading, 2)
                 .zIndex(1)
+                
+                // Day Breaks vertical dotted lines and tags
+                let dayBreakIndices = getDayBreakIndices()
+                ForEach(dayBreakIndices, id: \.self) { idx in
+                    let x = w * CGFloat(idx) / CGFloat(max(1, points.count - 1))
+                    
+                    ZStack {
+                        Path { path in
+                            path.move(to: CGPoint(x: x, y: 0))
+                            path.addLine(to: CGPoint(x: x, y: h))
+                        }
+                        .stroke(MarketTheme.amberText.opacity(0.35), style: StrokeStyle(lineWidth: 1.0, dash: [4, 4]))
+                        
+                        Text(formatDayLabel(timestamps[idx]))
+                            .font(.system(size: 6.0 * fontSizeScale, weight: .bold, design: .rounded))
+                            .foregroundColor(MarketTheme.amberText.opacity(0.8))
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1.5)
+                            .background(MarketTheme.background.opacity(0.85))
+                            .cornerRadius(3)
+                            .rotationEffect(.degrees(-90))
+                            .position(x: x, y: h / 2.0)
+                    }
+                }
                 
                 if points.count > 1 {
                     let minVal = points.min() ?? 0.0
@@ -127,12 +172,20 @@ struct BreadthCardView: View {
     let title: String
     let item: MarketBreadthItem
     let historyPoints: [Double]
+    let timestamps: [Date]
     let fontSizeScale: Double
     let yTicks: [String]
     let baselineYPercent: CGFloat?
     
     @State private var isHovered = false
     @State private var animateBar = false
+    
+    private func formatTime(_ date: Date?) -> String {
+        guard let d = date else { return "--:--" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: d)
+    }
     
     var body: some View {
         let isBullish = item.leftBarPercent >= item.rightBarPercent
@@ -185,6 +238,7 @@ struct BreadthCardView: View {
                 VStack(spacing: 4) {
                     BreadthSparklineChart(
                         points: historyPoints,
+                        timestamps: timestamps,
                         isBullish: isBullish,
                         yTicks: yTicks,
                         baselineYPercent: baselineYPercent,
@@ -194,11 +248,11 @@ struct BreadthCardView: View {
                     
                     // Time axis tick labels at the bottom of the chart
                     HStack {
-                        Text("0:00")
+                        Text(formatTime(timestamps.first))
                             .font(.system(size: 7 * fontSizeScale, weight: .bold, design: .monospaced))
                             .foregroundColor(MarketTheme.labelSecondary.opacity(0.5))
                         Spacer()
-                        Text("13:30")
+                        Text(formatTime(timestamps.last))
                             .font(.system(size: 7 * fontSizeScale, weight: .bold, design: .monospaced))
                             .foregroundColor(MarketTheme.labelSecondary.opacity(0.5))
                     }
@@ -309,6 +363,13 @@ struct IndexCardView: View {
     @State private var isHovered = false
     @State private var animateBar = false
     
+    private func formatTime(_ date: Date?) -> String {
+        guard let d = date else { return "--:--" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: d)
+    }
+    
     var body: some View {
         // VIX rising is bearish (red), falling is bullish (green). Same for Put/Call.
         let isBullish = index.priceChangePercent <= 0.0
@@ -354,6 +415,7 @@ struct IndexCardView: View {
                 VStack(spacing: 4) {
                     BreadthSparklineChart(
                         points: index.historyPoints,
+                        timestamps: index.historyTimestamps,
                         isBullish: isBullish,
                         yTicks: yTicks,
                         baselineYPercent: baselineYPercent,
@@ -362,11 +424,11 @@ struct IndexCardView: View {
                     .frame(height: 120)
                     
                     HStack {
-                        Text("0:00")
+                        Text(formatTime(index.historyTimestamps.first))
                             .font(.system(size: 7 * fontSizeScale, weight: .bold, design: .monospaced))
                             .foregroundColor(MarketTheme.labelSecondary.opacity(0.5))
                         Spacer()
-                        Text("13:30")
+                        Text(formatTime(index.historyTimestamps.last))
                             .font(.system(size: 7 * fontSizeScale, weight: .bold, design: .monospaced))
                             .foregroundColor(MarketTheme.labelSecondary.opacity(0.5))
                     }
@@ -858,6 +920,7 @@ public struct BreadthDashboardView: View {
                             title: title,
                             item: item,
                             historyPoints: historyPoints,
+                            timestamps: fetcher.historyTimestamps,
                             fontSizeScale: fontSizeScale,
                             yTicks: yTicks,
                             baselineYPercent: basePerc

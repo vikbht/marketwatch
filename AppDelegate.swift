@@ -20,10 +20,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             button.target = self
         }
         
-        // Listen to changes in both breadth items and sentiment to dynamically update the menu bar title
-        Publishers.CombineLatest(fetcher.$items, fetcher.$sentiment)
+        // Listen to changes in breadth items to dynamically update the menu bar title
+        fetcher.$items
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] items, sentiment in
+            .sink { [weak self] items in
                 guard let self = self else { return }
                 
                 var titleString = ""
@@ -34,16 +34,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     let components = leftVal.components(separatedBy: " ")
                     if let rawPercent = components.first, !rawPercent.isEmpty {
                         titleString += "📊 \(rawPercent)"
-                    }
-                }
-                
-                // 2. Get Bull % (Sentiment)
-                if let sentimentData = sentiment {
-                    let bullPercentInt = Int(round(sentimentData.bullPercent * 100))
-                    if !titleString.isEmpty {
-                        titleString += "  🐂 \(bullPercentInt)%"
-                    } else {
-                        titleString += "🐂 \(bullPercentInt)%"
                     }
                 }
                 

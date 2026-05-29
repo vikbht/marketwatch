@@ -93,28 +93,16 @@ struct BreadthSparklineChart: View {
                 .padding(.leading, 2)
                 .zIndex(1)
                 
-                // Day Breaks vertical dotted lines and tags
+                // Day Breaks vertical dotted lines
                 let dayBreakIndices = getDayBreakIndices()
                 ForEach(dayBreakIndices, id: \.self) { idx in
                     let x = w * CGFloat(idx) / CGFloat(max(1, points.count - 1))
                     
-                    ZStack {
-                        Path { path in
-                            path.move(to: CGPoint(x: x, y: 0))
-                            path.addLine(to: CGPoint(x: x, y: h))
-                        }
-                        .stroke(MarketTheme.amberText.opacity(0.35), style: StrokeStyle(lineWidth: 1.0, dash: [4, 4]))
-                        
-                        Text(formatDayLabel(timestamps[idx]))
-                            .font(.system(size: 6.0 * fontSizeScale, weight: .bold, design: .rounded))
-                            .foregroundColor(MarketTheme.amberText.opacity(0.8))
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1.5)
-                            .background(MarketTheme.background.opacity(0.85))
-                            .cornerRadius(3)
-                            .rotationEffect(.degrees(-90))
-                            .position(x: x, y: h / 2.0)
+                    Path { path in
+                        path.move(to: CGPoint(x: x, y: 0))
+                        path.addLine(to: CGPoint(x: x, y: h))
                     }
+                    .stroke(MarketTheme.amberText.opacity(0.65), style: StrokeStyle(lineWidth: 1.0, dash: [4, 4]))
                 }
                 
                 if points.count > 1 {

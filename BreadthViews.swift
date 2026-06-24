@@ -201,18 +201,41 @@ public struct BreadthDashboardView: View {
             }
             .padding(.horizontal, 4)
             
-            // Horizontal row of 4 horizontal cards side-by-side
+            // Split layout columns (Left side: 4 stacked cards, Right side: S&P 500 Map Card)
             HStack(spacing: 12) {
-                if fetcher.items.count >= 4 {
-                    ForEach(0..<4, id: \.self) { idx in
-                        SimpleBreadthCardView(
-                            item: fetcher.items[idx],
-                            fontSizeScale: fontSizeScale
-                        )
+                VStack(spacing: 8) {
+                    if fetcher.items.count >= 4 {
+                        ForEach(0..<4, id: \.self) { idx in
+                            SimpleBreadthCardView(
+                                item: fetcher.items[idx],
+                                fontSizeScale: fontSizeScale
+                            )
+                        }
+                    } else {
+                        ProgressView().frame(width: 250, height: 272)
                     }
-                } else {
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: 62)
                 }
+                
+                // Finviz S&P 500 Sector Heatmap Card
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("S&P 500 SECTOR HEATMAP")
+                        .font(.system(size: 11 * fontSizeScale, weight: .bold, design: .rounded))
+                        .foregroundColor(MarketTheme.labelSecondary)
+                        .padding(.horizontal, 4)
+                        .padding(.top, 2)
+                    
+                    FinvizMapView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .cornerRadius(4)
+                }
+                .padding(8)
+                .frame(width: 780, height: 272)
+                .background(MarketTheme.cardBackground)
+                .cornerRadius(6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(MarketTheme.border, lineWidth: 1.0)
+                )
             }
             
             // Subtle footer / status message
@@ -321,7 +344,7 @@ public struct BreadthDashboardView: View {
             .padding(.horizontal, 4)
         }
         .padding(12)
-        .frame(width: 1080, height: 170)
+        .frame(width: 1080, height: 380)
         .background(MarketTheme.background)
     }
     

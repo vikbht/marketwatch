@@ -10,7 +10,7 @@ echo "Using SDK: $SDK_PATH"
 # Compile Swift files
 swiftc -O \
     -sdk "$SDK_PATH" \
-    main.swift AppDelegate.swift BreadthViews.swift Parser.swift \
+    main.swift AppDelegate.swift BreadthViews.swift Parser.swift FinvizMapView.swift \
     -o MarketWatch
 
 echo "=== Compilation Succeeded! ==="

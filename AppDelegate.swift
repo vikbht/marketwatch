@@ -50,7 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Setup NSPopover
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 1080, height: 170)
+        popover.contentSize = NSSize(width: 1080, height: 380)
         popover.behavior = .transient // Automatically closes when clicking away
         popover.contentViewController = NSHostingController(rootView: dashboardView)
         
@@ -129,7 +129,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             
             // Create panel
-            let rect = NSRect(x: 0, y: 0, width: 1080, height: 170)
+            let rect = NSRect(x: 0, y: 0, width: 1080, height: 380)
             let window = HUDPanel(contentRect: rect)
             window.center()
             window.delegate = self

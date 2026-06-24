@@ -229,7 +229,7 @@ public struct BreadthDashboardView: View {
             }
             .padding(8)
             .frame(maxWidth: .infinity)
-            .frame(height: 350)
+            .frame(height: 480)
             .background(MarketTheme.cardBackground)
             .cornerRadius(6)
             .overlay(
@@ -343,7 +343,7 @@ public struct BreadthDashboardView: View {
             .padding(.horizontal, 4)
         }
         .padding(12)
-        .frame(width: 1080, height: 540)
+        .frame(width: 1080, height: 670)
         .background(MarketTheme.background)
     }
     

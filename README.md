@@ -4,7 +4,7 @@ A lightweight, premium native macOS status bar application that monitors critica
 
 Built entirely in native Swift, Cocoa, and SwiftUI with **zero external dependencies**, compiling into an extremely optimized, standalone executable that runs in accessory mode (hidden from the Dock) and consumes near-zero system resources.
 
-![MarketWatch Visual Dashboard](file:///Users/vikasbhatia/.gemini/antigravity/brain/4fcb9e87-395c-4242-b0a7-082bbfb6e273/media__1782333000000.png)
+![MarketWatch Visual Dashboard](images/screenshot.png)
 ---
 
 ## ✨ Key Features

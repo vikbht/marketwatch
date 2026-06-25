@@ -50,7 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Setup NSPopover
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 1080, height: 670)
+        popover.contentSize = NSSize(width: 1200, height: 860)
         popover.behavior = .transient // Automatically closes when clicking away
         popover.contentViewController = NSHostingController(rootView: dashboardView)
         
@@ -73,6 +73,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.fetcher.fetch()
         }
+        
+        
         
         
         // Listen for screenshot requests from SwiftUI view
@@ -129,7 +131,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             
             // Create panel
-            let rect = NSRect(x: 0, y: 0, width: 1080, height: 670)
+            let rect = NSRect(x: 0, y: 0, width: 1200, height: 860)
             let window = HUDPanel(contentRect: rect)
             window.center()
             window.delegate = self

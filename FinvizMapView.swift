@@ -1,6 +1,8 @@
 import SwiftUI
 import WebKit
 
+
+
 struct FinvizMapView: NSViewRepresentable {
     let urlString: String = "https://finviz.com/map?t=sec&preset_order=true"
     
@@ -10,6 +12,8 @@ struct FinvizMapView: NSViewRepresentable {
         
         let config = WKWebViewConfiguration()
         config.defaultWebpagePreferences = prefs
+        
+
         
         // Custom CSS stylesheet injected directly to keep only the treemap canvas and its internal toolbars
         let css = """
@@ -41,9 +45,18 @@ struct FinvizMapView: NSViewRepresentable {
             height: 100% !important;
         }
         #root {
+            --root-min-height: 0px !important;
             width: 100% !important;
             height: 100% !important;
             min-height: 100% !important;
+        }
+        #body {
+            height: calc(100% - 46px) !important;
+            min-height: 0 !important;
+        }
+        #canvas-wrapper {
+            height: 100% !important;
+            min-height: 0 !important;
         }
         """
         
@@ -59,6 +72,38 @@ struct FinvizMapView: NSViewRepresentable {
         style.innerHTML = `\(css)`;
         document.head.appendChild(style);
         document.documentElement.classList.add('dark');
+        // Enforce pixel height boundaries continuously to override React layout calculation
+        var runLayoutFix = function() {
+            try {
+                var bodyEl = document.getElementById('body');
+                var canvasWrapper = document.getElementById('canvas-wrapper');
+                var targetHeight = (window.innerHeight - 46) + 'px';
+                
+                var changed = false;
+                if (bodyEl && bodyEl.style.height !== targetHeight) {
+                    bodyEl.style.setProperty('height', targetHeight, 'important');
+                    bodyEl.style.setProperty('min-height', '0px', 'important');
+                    changed = true;
+                }
+                if (canvasWrapper && canvasWrapper.style.height !== '100%') {
+                    canvasWrapper.style.setProperty('height', '100%', 'important');
+                    canvasWrapper.style.setProperty('min-height', '0px', 'important');
+                    changed = true;
+                }
+                
+                if (changed) {
+                    window.dispatchEvent(new Event('resize'));
+                }
+            } catch(err) {
+                // Silent catch
+            }
+        };
+        setInterval(runLayoutFix, 250);
+        setTimeout(runLayoutFix, 1000);
+        setTimeout(runLayoutFix, 3000);
+        setTimeout(runLayoutFix, 5000);
+        
+
         """
         
         let startScript = WKUserScript(source: docStartJs, injectionTime: .atDocumentStart, forMainFrameOnly: true)

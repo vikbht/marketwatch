@@ -94,7 +94,8 @@ struct SimpleBreadthCardView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 10)
-        .frame(width: 250, height: 62)
+        .frame(maxWidth: .infinity)
+        .frame(height: 62)
         .background(MarketTheme.cardBackground)
         .cornerRadius(6)
         .overlay(
@@ -229,7 +230,7 @@ public struct BreadthDashboardView: View {
             }
             .padding(8)
             .frame(maxWidth: .infinity)
-            .frame(height: 480)
+            .frame(height: 680)
             .background(MarketTheme.cardBackground)
             .cornerRadius(6)
             .overlay(
@@ -343,7 +344,7 @@ public struct BreadthDashboardView: View {
             .padding(.horizontal, 4)
         }
         .padding(12)
-        .frame(width: 1080, height: 670)
+        .frame(width: 1200, height: 860)
         .background(MarketTheme.background)
     }
     
